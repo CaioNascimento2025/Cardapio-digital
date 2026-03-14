@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pratinhos Gourmet - Offline Ready</title>
+    
+    <style>
+        /* ==========================================================================
+           CSS - ESTILIZAÇÃO (Visual e Responsividade)
+           ========================================================================== */
+        :root {
+            /* Definindo cores padrões para fácil manutenção */
+            --verde: #16a34a;
+            --verde-escuro: #15803d;
+            --azul: #2563eb;
+            --fundo: #f1f5f9;
+            --texto: #334155;
+            --branco: #ffffff;
+            --borda: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            /* Fonte do sistema: usa a melhor fonte disponível no dispositivo sem baixar nada */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--fundo);
+            color: var(--texto);
+            line-height: 1.5;
+            padding-bottom: 120px; /* Espaço para o rodapé não cobrir o conteúdo */
+        }
+
+        /* CABEÇALHO */
+        header {
+            background: var(--branco);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--borda);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        /* BARRA DE PROGRESSO (Indica em qual passo o usuário está) */
+        .etapas {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 5px;
+        }
+
+        .passo {
+            flex: 1;
+            background: var(--borda);
+            padding: 8px 2px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .passo.ativo {
+            background: var(--azul);
+            color: white;
+        }
+
+        /* GRID DE PRODUTOS */
+        .grid {
+            display: grid;
+            /* Cria colunas que se ajustam sozinhas (mínimo 150px) */
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--branco);
+            border: 2px solid var(--borda);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card:hover {
+            border-color: var(--azul);
+        }
+
+        .card.selecionado {
+            border-color: var(--verde);
+            background: #f0fdf4;
+        }
+
+        .emoji-grande {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .preco {
+            color: var(--verde);
+            font-weight: bold;
+            display: block;
+            margin: 5px 0;
+        }
+
+        /* CONTROLES DE QUANTIDADE */
+        .controles {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-circular {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background: var(--azul);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-circular:disabled {
+            background: #cbd5e1;
+        }
+
+        /* RODAPÉ FIXO */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--branco);
+            padding: 15px 20px;
+            border-top: 2px solid var(--borda);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -5px 10px rgba(0,0,0,0.05);
+        }
+
+        .btn-proximo {
+            background: var(--verde);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* MODAL DO CARRINHO */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 20px;
+            border-radius: 15px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .item-carrinho {
+            border-bottom: 1px solid var(--borda);
+            padding: 10px 0;
+            font-size: 14px;
+        }
+
+        .remover-link {
+            color: #ef4444;
+            font-size: 12px;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        /* RESPONSIVIDADE PARA CELULAR */
+        @media (max-width: 480px) {
+            .grid { grid-template-columns: 1fr 1fr; }
+            header h1 { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1 id="titulo-topo">Monte seu Pratinho</h1>
+    <p id="instrucao" style="font-size: 13px; color: #64748b;">Passo 1: Escolha o tamanho</p>
+</header>
+
+<div class="container">
+    <!-- Barra de Progresso Visual -->
+    <div class="etapas">
+        <div class="passo ativo" id="p0">Tamanho</div>
+        <div class="passo" id="p1">Proteínas</div>
+        <div class="passo" id="p2">Carbo</div>
+        <div class="passo" id="p3">Extras</div>
+    </div>
+
+    <!-- Onde os itens vão aparecer -->
+    <div id="area-selecao" class="grid"></div>
+</div>
+
+<!-- Modal do Carrinho -->
+<div id="modal-carrinho" class="modal">
+    <div class="modal-content">
+        <h2>Seu Pedido 🛒</h2>
+        <div id="lista-carrinho"></div>
+        <div style="margin-top: 20px; text-align: right;">
+            <h3 id="total-modal">Total: R$ 0,00</h3>
+        </div>
+        <button class="btn-proximo" style="width: 100%; margin-top: 15px;" onclick="enviarWhatsApp()">
+            ✅ Enviar Tudo para o WhatsApp
+        </button>
+        <button onclick="fecharCarrinho()" style="width: 100%; margin-top: 10px; background: none; border: none; color: #64748b; cursor: pointer;">
+            Voltar e adicionar mais
+        </button>
+    </div>
+</div>
+
+<footer>
+    <div>
+        <span style="font-size: 12px; display: block;">Total:</span>
+        <strong id="visor-total" style="font-size: 20px; color: var(--verde);">R$ 0,00</strong>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <button id="btn-carrinho" onclick="abrirCarrinho()" class="btn-proximo" style="background: var(--azul);">
+            📦 <span id="contagem-carrinho">0</span>
+        </button>
+        <button id="btn-acao" class="btn-proximo" onclick="avancar()">Avançar</button>
+    </div>
+</footer>
+
+<script>
+/* ==========================================================================
+JAVASCRIPT - LÓGICA
+========================================================================== */
+
+const DADOS = {
+
+tamanhos:[
+{ id:1,nome:"Pequeno (P)",valor:12,limiteProt:1,icone:"🥣"},
+{ id:2,nome:"Médio (M)",valor:14,limiteProt:2,icone:"🍽️"},
+{ id:3,nome:"Grande (G)",valor:17,limiteProt:2,icone:"🍱"},
+{ id:4,nome:"Família (GG)",valor:20,limiteProt:3,icone:"🥘"}
+],
+
+proteinas:[
+{ id:1,nome:"Frango",icone:"🍗"},
+{ id:2,nome:"Carne",icone:"🥩"},
+{ id:3,nome:"Peixe",icone:"🐟"},
+{ id:4,nome:"Ovo",icone:"🥚"}
+],
+
+carboidratos:[
+{ id:1,nome:"Arroz Branco",icone:"🍚"},
+{ id:2,nome:"Baião de Dois",icone:"🍲"},
+{ id:3,nome:"Macarrão",icone:"🍝"}
+],
+
+extras:[
+{ id:1,nome:"Farofa",icone:"🥘"},
+{ id:2,nome:"Salada",icone:"🥗"},
+{ id:3,nome:"Batata",icone:"🍟"}
+]
+
+}
+
+
+// =========================
+// ESTADO
+// =========================
+
+let etapaAtual = 0
+let carrinho = []
+
+let pratoMontando = {
+
+tamanho:null,
+proteinas:[],
+carboidratos:[],
+extras:[]
+
+}
+
+
+// =========================
+// INICIALIZAÇÃO
+// =========================
+
+window.onload = () => renderizarEtapa()
+
+
+// =========================
+// FUNÇÕES NOVAS
+// =========================
+
+// valida proteínas
+function validarProteinas(){
+
+let limite = pratoMontando.tamanho.limiteProt
+let total = pratoMontando.proteinas.length
+
+if(total !== limite){
+
+alert(`Escolha exatamente ${limite} proteína(s)`)
+
+return false
+}
+
+return true
+}
+
+
+// impedir repetir extras
+function podeAdicionarExtra(id){
+
+let existe = pratoMontando.extras.find(e => e.id === id)
+
+if(existe){
+
+alert("Você já escolheu esse extra")
+
+return false
+}
+
+return true
+}
+
+
+// resumo do prato
+function resumoPrato(){
+
+return `
+Proteínas: ${pratoMontando.proteinas.map(p=>p.nome).join(", ")}
+Carbo: ${pratoMontando.carboidratos.map(c=>c.nome).join(", ")}
+Extras: ${pratoMontando.extras.map(e=>e.nome).join(", ") || "Nenhum"}
+`
+
+}
+
+
+
+// =========================
+// RENDERIZAÇÃO
+// =========================
+
+function renderizarEtapa(){
+
+const grid = document.getElementById("area-selecao")
+const instr = document.getElementById("instrucao")
+
+grid.innerHTML = ""
+
+
+if(etapaAtual === 0){
+
+instr.innerText = "Passo 1: Escolha o tamanho"
+
+DADOS.tamanhos.forEach(t=>{
+
+const selecionado = pratoMontando.tamanho?.id === t.id ? "selecionado": ""
+
+grid.innerHTML +=`
+
+<div class="card ${selecionado}" onclick="selecionarTamanho(${t.id})">
+
+<span class="emoji-grande">${t.icone}</span>
+
+<h3>${t.nome}</h3>
+
+<span class="preco">R$ ${t.valor.toFixed(2)}</span>
+
+<small>${t.limiteProt} proteínas</small>
+
+</div>
+
+`
+
+})
+
+}
+
+
+
+else{
+
+let tipo = etapaAtual === 1
+? "proteinas"
+: etapaAtual === 2
+? "carboidratos"
+: "extras"
+
+let limite = etapaAtual === 1
+? pratoMontando.tamanho.limiteProt
+: etapaAtual === 2
+? 1
+: 2
+
+let selecionados = pratoMontando[tipo].length
+
+instr.innerText = `Escolha (${selecionados} / ${limite})`
+
+DADOS[tipo].forEach(item=>{
+
+const qtd = pratoMontando[tipo].filter(i=>i.id===item.id).length
+const total = pratoMontando[tipo].length
+
+grid.innerHTML +=`
+
+<div class="card">
+
+<span class="emoji-grande">${item.icone}</span>
+
+<h3>${item.nome}</h3>
+
+<div class="controles">
+
+<button class="btn-circular" onclick="mudarQtd('${tipo}',${item.id},-1)">-</button>
+
+<strong>${qtd}</strong>
+
+<button class="btn-circular"
+${total >= limite ? 'disabled':''}
+onclick="mudarQtd('${tipo}',${item.id},1)">+</button>
+
+</div>
+
+</div>
+
+`
+
+})
+
+}
+
+
+document.querySelectorAll(".passo").forEach((p,idx)=>{
+p.classList.toggle("ativo",idx===etapaAtual)
+})
+
+}
+
+
+// =========================
+// SELEÇÕES
+// =========================
+
+function selecionarTamanho(id){
+
+pratoMontando.tamanho = DADOS.tamanhos.find(t=>t.id===id)
+
+renderizarEtapa()
+
+}
+
+
+
+// =========================
+// PROTEÇÃO CONTRA CLIQUE RÁPIDO
+// =========================
+
+function mudarQtd(tipo,id,operacao){
+
+const item = DADOS[tipo].find(i=>i.id===id)
+
+let limite = tipo==="proteinas"
+? pratoMontando.tamanho.limiteProt
+: tipo==="carboidratos"
+? 1
+: 2
+
+let total = pratoMontando[tipo].length
+
+
+if(operacao === 1){
+
+// trava contra clique rápido
+if(total >= limite) return
+
+if(tipo === "extras"){
+if(!podeAdicionarExtra(id)) return
+}
+
+pratoMontando[tipo].push(item)
+
+}
+
+else{
+
+let index = pratoMontando[tipo].findIndex(i=>i.id===id)
+
+if(index>-1){
+pratoMontando[tipo].splice(index,1)
+}
+
+}
+
+renderizarEtapa()
+
+}
+
+
+
+// =========================
+// AVANÇAR
+// =========================
+
+function avancar(){
+
+if(etapaAtual===0){
+
+if(!pratoMontando.tamanho){
+alert("Escolha um tamanho")
+return
+}
+
+etapaAtual=1
+}
+
+
+
+else if(etapaAtual===1){
+
+if(!validarProteinas()) return
+
+etapaAtual=2
+}
+
+
+
+else if(etapaAtual===2){
+
+if(pratoMontando.carboidratos.length===0){
+
+alert("Escolha um carboidrato")
+return
+
+}
+
+etapaAtual=3
+
+document.getElementById("btn-acao").innerText="Finalizar"
+
+}
+
+
+
+else if(etapaAtual===3){
+
+if(!confirm("Confirmar prato?\n\n"+resumoPrato())) return
+
+carrinho.push({...pratoMontando})
+
+pratoMontando={
+tamanho:null,
+proteinas:[],
+carboidratos:[],
+extras:[]
+}
+
+etapaAtual=0
+
+document.getElementById("btn-acao").innerText="Avançar"
+
+alert("Prato adicionado ao carrinho")
+
+atualizarVisorTotal()
+
+}
+
+renderizarEtapa()
+
+}
+
+
+
+// =========================
+// TOTAL
+// =========================
+
+function atualizarVisorTotal(){
+
+let total = carrinho.reduce((acc,p)=>acc+p.tamanho.valor,0)
+
+document.getElementById("visor-total").innerText=`R$ ${total.toFixed(2)}`
+
+document.getElementById("contagem-carrinho").innerText=carrinho.length
+
+}
+
+
+
+// =========================
+// CARRINHO
+// =========================
+
+function abrirCarrinho(){
+
+if(carrinho.length===0){
+alert("Carrinho vazio")
+return
+}
+
+const lista = document.getElementById("lista-carrinho")
+
+lista.innerHTML=""
+
+carrinho.forEach((item,index)=>{
+
+lista.innerHTML+=`
+
+<div class="item-carrinho">
+
+<strong>${index+1}. ${item.tamanho.nome}</strong> - R$ ${item.tamanho.valor.toFixed(2)}
+
+<br>
+
+<small>
+
+${item.proteinas.map(p=>p.nome).join(", ")}
+
+|
+
+${item.carboidratos.map(c=>c.nome).join(", ")}
+
+${item.extras.length?' | '+item.extras.map(e=>e.nome).join(", "):''}
+
+</small>
+
+<br>
+
+<span class="remover-link" onclick="removerDoCarrinho(${index})">Remover</span>
+
+</div>
+
+`
+
+})
+
+
+let total=carrinho.reduce((acc,p)=>acc+p.tamanho.valor,0)
+
+document.getElementById("total-modal").innerText=`Total: R$ ${total.toFixed(2)}`
+
+document.getElementById("modal-carrinho").style.display="block"
+
+}
+
+
+
+function fecharCarrinho(){
+
+document.getElementById("modal-carrinho").style.display="none"
+
+}
+
+
+
+function removerDoCarrinho(i){
+
+carrinho.splice(i,1)
+
+if(carrinho.length===0){
+fecharCarrinho()
+}else{
+abrirCarrinho()
+}
+
+atualizarVisorTotal()
+
+}
+
+
+
+// =========================
+// WHATSAPP
+// =========================
+
+function enviarWhatsApp(){
+
+let texto="*NOVO PEDIDO*\n\n"
+
+carrinho.forEach((p,i)=>{
+
+texto+=`*${i+1}. ${p.tamanho.nome}* (R$ ${p.tamanho.valor})\n`
+
+texto+=`Prot: ${p.proteinas.map(pt=>pt.nome).join(", ")}\n`
+
+texto+=`Carbo: ${p.carboidratos.map(c=>c.nome).join(", ")}\n`
+
+if(p.extras.length)
+texto+=`Extras: ${p.extras.map(e=>e.nome).join(", ")}\n`
+
+texto+="\n"
+
+})
+
+let total=carrinho.reduce((acc,p)=>acc+p.tamanho.valor,0)
+
+texto+=`*TOTAL: R$ ${total.toFixed(2)}*`
+
+const numero="5585992264734"
+
+window.open(`https://wa.me/${numero}?text=${encodeURIComponent(texto)}`)
+
+}
+</script>
+
+</body>
+</html>
