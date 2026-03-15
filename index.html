@@ -283,7 +283,11 @@ let etapaAtual = 0;
 let carrinho = [];
 let bloqueado = false;
 let pratoMontando = { tamanho: null, proteinas: [], carboidratos: [], extras: [] };
-
+//limpar campos
+const limparTexto = (str) => {
+    if (typeof str !== 'string') return str;
+    return str.replace(/<[^>]*>?/gm, '');
+};
 // --- LÓGICA DE HORÁRIO ---
 function verificarHorario() {
     const agora = new Date();
