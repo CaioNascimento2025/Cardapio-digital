@@ -235,7 +235,7 @@
         <h2>Seu Pedido 🛒</h2>
         <div id="lista-carrinho"></div>
         <h3 id="total-modal" style="margin: 15px 0; text-align: right;">Total: R$ 0,00</h3>
-        <button class="btn-acao" style="width: 100%;" onclick="enviarWhatsApp()">Enviar para WhatsApp</button>
+        <button class="btn-acao" style="width: 100%;" onclick="finalizarPedido()">Enviar para WhatsApp</button>
         <button onclick="fecharCarrinho()" style="width: 100%; margin-top: 10px; background: none; border: none; color: #64748b; cursor: pointer;">Voltar</button>
     </div>
 </div>
@@ -365,7 +365,42 @@ function selecionarTamanho(id) {
     pratoMontando.tamanho = DADOS.tamanhos.find(t => t.id === id);
     renderizar();
 }
+async function finalizarPedido() {
+    if (carrinho.length === 0) return alert("Carrinho vazio!");
 
+    const prato = carrinho[0];
+
+    const dadosPedido = {
+        tamanhoId: prato.tamanho.id,
+        proteinas: prato.proteinas,
+        carboidratos: prato.carboidratos,
+        extras: prato.extras
+    };
+
+    try {
+        // Mostra um aviso de que está validando (opcional)
+        console.log("Validando no servidor...");
+
+        const resposta = await fetch('/.netlify/functions/validar-pedido', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dadosPedido)
+        });
+
+        const resultado = await resposta.json(); // Use 'resposta' aqui
+
+        if (resposta.ok && resultado.sucesso) {
+            // Se o servidor deu OK, ele envia o preço oficial para o zap
+            enviarParaWhatsApp(resultado.valorValidado);
+        } else {
+            // Se o servidor negou (ex: 2 carboidratos), ele mostra o erro
+            alert("⚠️ " + (resultado.erro || "Erro na validação"));
+        }
+    } catch (error) {
+        alert("Erro de conexão. Verifique sua internet.");
+        console.error(error);
+    }
+}
 function mudarQtd(tipo, id, op) {
     const item = DADOS[tipo].find(i => i.id === id);
     
@@ -464,22 +499,20 @@ function remover(idx) {
     atualizarTotal();
 }
 
-function enviarWhatsApp() {
-    let msg = "*NOVO PEDIDO GOURMET*\n\n";
-    carrinho.forEach((p, i) => {
-        msg += `*${i+1}. PRATO ${p.tamanho.nome.toUpperCase()}*\n`;
-        msg += `🥩 Prots: ${p.proteinas.map(pt => pt.nome).join(", ")}\n`;
-        msg += `🍚 Carbo: ${p.carboidratos.map(c => c.nome).join(", ")}\n`;
-        if(p.extras.length) msg += `🥗 Extras: ${p.extras.map(e => e.nome).join(", ")}\n`;
-        msg += `--------------------------\n`;
-    });
-    const total = carrinho.reduce((acc, p) => acc + p.tamanho.valor, 0);
-    msg += `\n*TOTAL: R$ ${total.toFixed(2)}*`;
+function enviarParaWhatsApp(valorOficial) {
+    const prato = carrinho[0];
+    const fone = "5585992264734"; // Seu número
     
-    const fone = "5585992264734";
-    window.open(`https://wa.me/${fone}?text=${encodeURIComponent(msg)}`);
-}
+    let msg = `*NOVO PEDIDO CONFIRMADO*\n`;
+    msg += `--------------------------\n`;
+    msg += `*Tamanho:* ${prato.tamanho.nome}\n`;
+    msg += `*Carbo:* ${prato.carboidratos[0].nome}\n`;
+    msg += `*Extras:* ${prato.extras.map(e => e.nome).join(", ") || "Nenhum"}\n`;
+    msg += `--------------------------\n`;
+    msg += `*VALOR TOTAL: R$ ${valorOficial.toFixed(2)}*`;
 
+    window.open(`https://wa.me/${fone}?text=${encodeURIComponent(msg)}`);
+                 }
 // Início
 window.onload = () => {
     verificarHorario();
