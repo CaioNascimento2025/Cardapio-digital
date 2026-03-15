@@ -52,6 +52,7 @@ if(event.body.length > 2000){
    erro:"Requisição inválida"
   })
  }
+}
   
 const PRECOS = {
 1:12.00,
