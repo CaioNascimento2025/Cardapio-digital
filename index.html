@@ -245,6 +245,12 @@
         <strong id="visor-total" style="font-size: 18px; color: var(--verde);">R$ 0,00</strong>
     </div>
     <div style="display: flex; gap: 8px;">
+    <div>
+             <input type="text" placeholder="nome" id="nome" required>
+             <br>
+             <input type="text"
+             id="rua" placeholder="endereço" required>
+    </div>
         <button onclick="abrirCarrinho()" style="background:#e2e8f0; border:none; padding:10px; border-radius:8px; cursor:pointer;">
             🛒 <span id="contagem-carrinho">0</span>
         </button>
@@ -372,8 +378,11 @@ async function finalizarPedido() {
     if (carrinho.length === 0) return alert("Carrinho vazio!");
 
     const prato = carrinho[0];
-
+    const nome = document.getElementById("nome")
+    const rua = document.getElementById("rua")
     const dadosPedido = {
+        nome:nome,
+        rua:rua,
         tamanhoId: prato.tamanho.id,
         proteinas: prato.proteinas,
         carboidratos: prato.carboidratos,
@@ -524,7 +533,8 @@ function enviarParaWhatsApp(valorOficial) {
     
     msg += `--------------------------\n`;
     msg += `*VALOR TOTAL: R$ ${valorOficial.toFixed(2)}*`;
-
+    msg += *prato.nome*
+    msg += *prato.rua*
     // Abre o WhatsApp com a mensagem formatada
     window.open(`https://wa.me/${fone}?text=${encodeURIComponent(msg)}`);
 }
