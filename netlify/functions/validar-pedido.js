@@ -25,7 +25,34 @@ return rua
 }
 
 exports.handler = async (event) => {
+// 🔒 PROTEÇÃO 1 — origem da requisição
+const origem = event.headers.origin || ""
+const referer = event.headers.referer || ""
 
+if(
+ !origem.includes("cardapio-curio.netlify.app") &&
+ !referer.includes("cardapio-curio.netlify.app")
+){
+ return {
+  statusCode:403,
+  body:JSON.stringify({
+   sucesso:false,
+   erro:"Acesso bloqueado"
+  })
+ }
+}
+
+
+// 🔒 PROTEÇÃO 2 — payload gigante
+if(event.body.length > 2000){
+ return {
+  statusCode:400,
+  body:JSON.stringify({
+   sucesso:false,
+   erro:"Requisição inválida"
+  })
+ }
+  
 const PRECOS = {
 1:12.00,
 2:14.00,
