@@ -517,7 +517,8 @@ function enviarParaWhatsApp(valorOficial) {
 
     const nome = document.getElementById("nome").value;
     const rua = document.getElementById("rua").value;
-
+    if(!nome) return alert("Preencha o campo nome")
+    if(!rua) return alert("Preencha o campo rua")
     let msg = `*NOVO PEDIDO CONFIRMADO*\n`;
     msg += `--------------------------\n`;
     msg += `*Cliente:* ${nome}\n`;
