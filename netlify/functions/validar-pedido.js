@@ -1,45 +1,140 @@
 exports.handler = async (event) => {
-    const PRECOS_OFICIAIS = { 1: 12.00, 2: 14.00, 3: 17.00, 4: 20.00 };
 
-    try {
-        const dados = JSON.parse(event.body);
-        const { tamanhoId, carboidratos, extras } = dados;
+const PRECOS = {
+1:12.00,
+2:14.00,
+3:17.00,
+4:20.00
+}
 
-        // --- NOVA REGRA DE CARBOIDRATOS ---
-        const nomesCarbos = carboidratos.map(c => c.nome.toLowerCase());
-        
-        // Filtramos tudo que NÃO é macarrão
-        const carbosPrincipais = nomesCarbos.filter(nome => !nome.includes("macarrão"));
+const LIMITE_PROTEINAS = {
+1:1,
+2:2,
+3:2,
+4:3
+}
 
-        // Validação:
-        // 1. Não pode estar vazio (tem que ter pelo menos macarrão ou um arroz/baião)
-        if (nomesCarbos.length === 0) {
-            return { statusCode: 400, body: JSON.stringify({ sucesso: false, erro: "Selecione pelo menos um carboidrato." }) };
-        }
+try {
 
-        // 2. Só pode ter no máximo UM carboidrato principal (Arroz, Baião, Grega, etc)
-        // Mas o Macarrão pode estar junto com qualquer um deles.
-        if (carbosPrincipais.length > 1) {
-            return { 
-                statusCode: 400, 
-                body: JSON.stringify({ sucesso: false, erro: "Você só pode escolher um tipo de arroz/baião. O macarrão é o único que pode ser combinado." }) 
-            };
-        }
-        // ----------------------------------
+const dados = JSON.parse(event.body)
 
-        // Validação de Extras Duplicados (mantida)
-        const idsExtras = extras.map(e => e.id);
-        if (new Set(idsExtras).size !== idsExtras.length) {
-            return { statusCode: 400, body: JSON.stringify({ sucesso: false, erro: "Extras repetidos não são permitidos." }) };
-        }
+const { tamanhoId, proteinas, carboidratos, extras } = dados
 
-        const valorValidado = PRECOS_OFICIAIS[tamanhoId] || 0;
+// validar tamanho
+if(!PRECOS[tamanhoId]){
+return {
+statusCode:400,
+body:JSON.stringify({
+sucesso:false,
+erro:"Tamanho inválido"
+})
+}
+}
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ sucesso: true, valorValidado: valorValidado }),
-        };
-    } catch (error) {
-        return { statusCode: 500, body: JSON.stringify({ sucesso: false, erro: "Erro no servidor." }) };
-    }
+// validar proteínas
+if(!Array.isArray(proteinas) || proteinas.length !== LIMITE_PROTEINAS[tamanhoId]){
+return {
+statusCode:400,
+body:JSON.stringify({
+sucesso:false,
+erro:"Quantidade de proteínas inválida"
+})
+}
+}
+
+// validar carboidratos
+if(!Array.isArray(carboidratos) || carboidratos.length === 0){
+return {
+statusCode:400,
+body:JSON.stringify({
+sucesso:false,
+erro:"Selecione pelo menos um carboidrato"
+})
+}
+}
+
+// nomes em minúsculo
+const nomesCarbos = carboidratos.map(c => c.nome.toLowerCase())
+
+// impedir carbo repetido
+if(new Set(nomesCarbos).size !== nomesCarbos.length){
+return {
+statusCode:400,
+body:JSON.stringify({
+sucesso:false,
+erro:"Carboidratos repetidos não são permitidos"
+})
+}
+}
+
+// filtra tudo que não é macarrão
+const carbosPrincipais = nomesCarbos.filter(nome => !nome.includes("macarrão"))
+
+// impedir dois principais (ex: arroz + baião)
+if(carbosPrincipais.length > 1){
+return {
+statusCode:400,
+body:JSON.stringify({
+sucesso:false,
+erro:"Só é permitido um arroz/baião. Macarrão pode acompanhar."
+})
+}
+}
+
+// validar extras
+if(!Array.isArray(extras)){
+return {
+statusCode:400,
+body:JSON.stringify({
+sucesso:false,
+erro:"Extras inválidos"
+})
+}
+}
+
+// extras duplicados
+const idsExtras = extras.map(e => e.id)
+
+if(new Set(idsExtras).size !== idsExtras.length){
+return {
+statusCode:400,
+body:JSON.stringify({
+sucesso:false,
+erro:"Extras repetidos não são permitidos"
+})
+}
+}
+
+// limite de extras
+if(extras.length > 10){
+return {
+statusCode:400,
+body:JSON.stringify({
+sucesso:false,
+erro:"Extras demais"
+})
+}
+}
+
+// retorno seguro
+return {
+statusCode:200,
+body:JSON.stringify({
+sucesso:true,
+valorValidado:PRECOS[tamanhoId]
+})
+}
+
+} catch (error) {
+
+return {
+statusCode:500,
+body:JSON.stringify({
+sucesso:false,
+erro:"Erro no servidor"
+})
+}
+
+}
+
 };
