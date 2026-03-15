@@ -1,3 +1,29 @@
+// limpar nome
+function limparNome(nome){
+
+if(typeof nome !== "string") return ""
+
+return nome
+.replace(/<[^>]*>?/gm,"")
+.replace(/[^\p{L}\s]/gu,"")
+.trim()
+.slice(0,40)
+
+}
+
+// limpar rua
+function limparRua(rua){
+
+if(typeof rua !== "string") return ""
+
+return rua
+.replace(/<[^>]*>?/gm,"")
+.replace(/[^\p{L}\p{N}\s.,-]/gu,"")
+.trim()
+.slice(0,80)
+
+}
+
 exports.handler = async (event) => {
 
 const PRECOS = {
@@ -17,7 +43,8 @@ const LIMITE_PROTEINAS = {
 try {
 
 const dados = JSON.parse(event.body)
-
+const nomeCliente = limparNome(dados.nome)
+const ruaCliente = limparRua(dados.rua)
 const { tamanhoId, proteinas, carboidratos, extras } = dados
 
 // validar tamanho
