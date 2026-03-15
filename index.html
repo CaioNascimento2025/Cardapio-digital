@@ -514,30 +514,31 @@ function remover(idx) {
 function enviarParaWhatsApp(valorOficial) {
     const prato = carrinho[0];
     const fone = "5585992264734";
-    
+
+    const nome = document.getElementById("nome").value;
+    const rua = document.getElementById("rua").value;
+
     let msg = `*NOVO PEDIDO CONFIRMADO*\n`;
     msg += `--------------------------\n`;
+    msg += `*Cliente:* ${nome}\n`;
+    msg += `*Endereço:* ${rua}\n`;
+    msg += `--------------------------\n`;
     msg += `*Tamanho:* ${prato.tamanho.nome}\n`;
-    
-    // Lista as proteínas selecionadas
+
     const listaProteinas = prato.proteinas.map(p => p.nome).join(", ");
     msg += `*Proteína(s):* ${listaProteinas}\n`;
-    
-    // Lista os carboidratos (Arroz + Macarrão, etc)
+
     const listaCarbos = prato.carboidratos.map(c => c.nome).join(" + ");
     msg += `*Carbo:* ${listaCarbos}\n`;
-    
-    // Lista os extras
+
     const listaExtras = prato.extras.map(e => e.nome).join(", ") || "Nenhum";
     msg += `*Extras:* ${listaExtras}\n`;
-    
+
     msg += `--------------------------\n`;
     msg += `*VALOR TOTAL: R$ ${valorOficial.toFixed(2)}*`;
-    msg += *prato.nome*
-    msg += *prato.rua*
-    // Abre o WhatsApp com a mensagem formatada
+
     window.open(`https://wa.me/${fone}?text=${encodeURIComponent(msg)}`);
-}
+        }
 // Início
 window.onload = () => {
     renderizar();
